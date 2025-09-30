@@ -94,23 +94,29 @@ public class Main {
 
         List<Elpris> prices = elpriserAPI.getPriser(today, zone);
 
+        if (prices.size() == 96){
+           prices = convertListToHourly(prices);
+        }
+
         List<Elpris> tomorrowsPrices = new ArrayList<>();
 
-        if((LocalDate.now().equals(today) && LocalTime.now().isAfter(LocalTime.of(13,0))) ||
-        today.isBefore(LocalDate.now()))
-         tomorrowsPrices = elpriserAPI.getPriser(tomorrow, zone);
+        if ((LocalDate.now().equals(today) && LocalTime.now().isAfter(LocalTime.of(13, 0))) ||
+                today.isBefore(LocalDate.now()))
+            tomorrowsPrices = elpriserAPI.getPriser(tomorrow, zone);
 
         if (prices.isEmpty() && tomorrowsPrices.isEmpty()) {
             System.out.println("Inga priser tillgängliga.");
             return;
         }
         List<Elpris> allPrices = new ArrayList<>(prices);
+
+
+        //Skriv ut Min,Max,Mean
         if (tomorrowsPrices.isEmpty()) {
-            printStats(prices);
-//            System.out.println("Inga priser tillgängliga för morgondagen.");
+            printMinMaxMean(prices);
         } else {
             allPrices.addAll(tomorrowsPrices);
-            printStats(allPrices);
+            printMinMaxMean(allPrices);
         }
 
         if (chargingArg != null) {
@@ -123,6 +129,45 @@ public class Main {
         }
     }
 
+    private static List<Elpris> convertListToHourly(List<Elpris> prices) {
+        List<Elpris> hourlyPrices = new ArrayList<>();
+
+        for (int i = 0; i < prices.size(); i += 4) {
+            double sekSum = 0;
+            double eurSum = 0;
+            double exrSum = 0;
+
+            // summera fyra kvartstimmar
+            for (int j = 0; j < 4; j++) {
+                Elpris p = prices.get(i + j);
+                sekSum += p.sekPerKWh();
+                eurSum += p.eurPerKWh();
+                exrSum += p.exr();
+            }
+
+            // medelvärden
+            double sekAvg = sekSum / 4.0;
+            double eurAvg = eurSum / 4.0;
+            double exrAvg = exrSum / 4.0;
+
+            Elpris first = prices.get(i);
+            Elpris last = prices.get(i + 3);
+
+            // skapa nytt timobjekt
+            Elpris hourly = new Elpris(
+                    sekAvg,
+                    eurAvg,
+                    exrAvg,
+                    first.timeStart(),
+                    last.timeEnd()
+            );
+
+            hourlyPrices.add(hourly);
+        }
+
+        return hourlyPrices;
+    }
+
     private static void printHelp() {
         System.out.println("Usage: ");
         System.out.println("--zone SE1|SE2|SE3|SE4 (required)");
@@ -132,7 +177,7 @@ public class Main {
         System.out.println("--help");
     }
 
-    private static void printStats(List<ElpriserAPI.Elpris> priser) {
+    private static void printMinMaxMean(List<Elpris> priser) {
         DateTimeFormatter hourFormatter = DateTimeFormatter.ofPattern("HH");
         double sum = 0;
         ElpriserAPI.Elpris billigast = priser.getFirst();
@@ -157,10 +202,10 @@ public class Main {
         System.out.printf("Högsta Pris: %s (%s öre)\n", dyrastTid, df.format(dyrast.sekPerKWh() * 100));
     }
 
-    private static void printSortedPrices(List<ElpriserAPI.Elpris> priser) {
+    private static void printSortedPrices(List<Elpris> priser) {
         // Sortera listan i stigande ordning efter pris
         List<Elpris> sortedList = new ArrayList<>(priser);
-        sortedList.sort(Comparator.comparingDouble(ElpriserAPI.Elpris::sekPerKWh).reversed());
+        sortedList.sort(Comparator.comparingDouble(Elpris::sekPerKWh).reversed());
 
         DecimalFormat df = getSwedishDecimalFormat();
 
