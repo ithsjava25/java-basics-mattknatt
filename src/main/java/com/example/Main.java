@@ -17,7 +17,6 @@ public class Main {
 
     public static void main(String[] args) {
         ElpriserAPI elpriserAPI = new ElpriserAPI();
-        Locale.setDefault(Locale.of("sv", "SE"));
         String zoneArg = null;
         Prisklass zone;
         String dateArg = null;
@@ -101,13 +100,19 @@ public class Main {
         List<Elpris> tomorrowsPrices = new ArrayList<>();
 
         if ((LocalDate.now().equals(today) && LocalTime.now().isAfter(LocalTime.of(13, 0))) ||
-                today.isBefore(LocalDate.now()))
+                today.isBefore(LocalDate.now())) {
             tomorrowsPrices = elpriserAPI.getPriser(tomorrow, zone);
+            if (tomorrowsPrices.size() == 96) {
+                tomorrowsPrices = convertListToHourly(tomorrowsPrices);
+            }
+        }
+
 
         if (prices.isEmpty() && tomorrowsPrices.isEmpty()) {
             System.out.println("Inga priser tillgängliga.");
             return;
         }
+
         List<Elpris> allPrices = new ArrayList<>(prices);
 
 
@@ -118,14 +123,13 @@ public class Main {
             allPrices.addAll(tomorrowsPrices);
             printMinMaxMean(allPrices);
         }
-
+        // Skriv ut laddningsfönster
         if (chargingArg != null) {
             findOptimalChargingWindow(allPrices, chargingArg);
         }
-
+        //Skriv ut sorterad lista
         if (sorted) {
             printSortedPrices(allPrices);
-
         }
     }
 
@@ -180,10 +184,10 @@ public class Main {
     private static void printMinMaxMean(List<Elpris> priser) {
         DateTimeFormatter hourFormatter = DateTimeFormatter.ofPattern("HH");
         double sum = 0;
-        ElpriserAPI.Elpris billigast = priser.getFirst();
-        ElpriserAPI.Elpris dyrast = priser.getFirst();
+        Elpris billigast = priser.getFirst();
+        Elpris dyrast = priser.getFirst();
 
-        for (ElpriserAPI.Elpris p : priser) {
+        for (Elpris p : priser) {
             double price = p.sekPerKWh();
             sum += price;
             if (price < billigast.sekPerKWh()) billigast = p;
@@ -215,17 +219,13 @@ public class Main {
         }
     }
 
-    private static void findOptimalChargingWindow(List<ElpriserAPI.Elpris> priser, String chargingArg) {
+    private static void findOptimalChargingWindow(List<Elpris> priser, String chargingArg) {
         int hours = 0;
         switch (chargingArg) {
             case "2h" -> hours = 2;
             case "4h" -> hours = 4;
             case "8h" -> hours = 8;
             default -> System.out.println("Invalid charging argument " + chargingArg);
-        }
-        if (priser.size() < hours) {
-            System.out.printf("För få tillgängliga timmar (%d) för att hitta ett %dh laddningsfönster.\n", priser.size(), hours);
-            return;
         }
 
         double minAvgPrice = Double.MAX_VALUE;
@@ -235,7 +235,6 @@ public class Main {
         // priser.size() - hours ger den sista index där fönstret (hours långt) ryms
         for (int i = 0; i <= priser.size() - hours; i++) {
             double currentSum = 0;
-            // Summera priserna inom det aktuella fönstret
             for (int j = 0; j < hours; j++) {
                 currentSum += priser.get(i + j).sekPerKWh();
             }
