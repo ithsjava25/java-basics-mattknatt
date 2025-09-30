@@ -94,8 +94,8 @@ public class Main {
 
         List<Elpris> prices = elpriserAPI.getPriser(today, zone);
 
-        if (prices.size() == 96){
-           prices = convertListToHourly(prices);
+        if (prices.size() == 96) {
+            prices = convertListToHourly(prices);
         }
 
         List<Elpris> tomorrowsPrices = new ArrayList<>();
@@ -111,7 +111,7 @@ public class Main {
         List<Elpris> allPrices = new ArrayList<>(prices);
 
 
-        //Skriv ut Min,Max,Mean
+        //Skriv ut Min, Max, Mean
         if (tomorrowsPrices.isEmpty()) {
             printMinMaxMean(prices);
         } else {
@@ -171,7 +171,7 @@ public class Main {
     private static void printHelp() {
         System.out.println("Usage: ");
         System.out.println("--zone SE1|SE2|SE3|SE4 (required)");
-        System.out.println("--date YYYY-MM-DD (optional, todays date as default)");
+        System.out.println("--date YYYY-MM-DD (optional, today's date as default)");
         System.out.println("--sorted (optional)");
         System.out.println("--charging 2h|4h|8h (optional)");
         System.out.println("--help");
@@ -265,9 +265,8 @@ public class Main {
         }
     }
 
-
     private static DecimalFormat getSwedishDecimalFormat() {
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(new Locale("sv", "SE"));
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.of("sv", "SE"));
         return new DecimalFormat("0.00", symbols);
     }
 }
