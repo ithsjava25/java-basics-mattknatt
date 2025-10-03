@@ -23,6 +23,7 @@ public class Main {
         boolean sorted = false;
         String chargingArg = null;
 
+
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--zone" -> {
@@ -199,7 +200,7 @@ public class Main {
 
 
         double mean = sum / priser.size();
-        DecimalFormat df = getSwedishDecimalFormat();
+        DecimalFormat df = swedishDecimalFormat();
 
         System.out.printf("Medelpris: %s öre\n", df.format(mean * 100));
         System.out.printf("Lägsta Pris: %s (%s öre)\n", billigastTid, df.format(billigast.sekPerKWh() * 100));
@@ -211,7 +212,7 @@ public class Main {
         List<Elpris> sortedList = new ArrayList<>(priser);
         sortedList.sort(Comparator.comparingDouble(Elpris::sekPerKWh).reversed());
 
-        DecimalFormat df = getSwedishDecimalFormat();
+        DecimalFormat df = swedishDecimalFormat();
 
         System.out.println("\nPriser sorterade efter pris (fallande):");
         for (ElpriserAPI.Elpris p : sortedList) {
@@ -253,7 +254,7 @@ public class Main {
             Elpris endPris = priser.get(bestStartIndex + hours - 1);
 
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-            DecimalFormat df = getSwedishDecimalFormat();
+            DecimalFormat df = swedishDecimalFormat();
 
             System.out.println("\nOptimalt laddningsfönster (" + hours + "h):");
             System.out.printf("Påbörja laddning kl %s\n", startPris.timeStart().format(timeFormatter));
@@ -264,7 +265,7 @@ public class Main {
         }
     }
 
-    private static DecimalFormat getSwedishDecimalFormat() {
+    private static DecimalFormat swedishDecimalFormat() {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.of("sv", "SE"));
         return new DecimalFormat("0.00", symbols);
     }
